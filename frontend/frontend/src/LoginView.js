@@ -1,9 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-
+import Home from './Home';
+import {backend} from './Constants';
 import './Login.css';
 
 const { Component } = React
+const root = ReactDOM.createRoot(document.getElementById('root'));
 
 class EntryPage extends Component {
   constructor(props){
@@ -11,6 +13,10 @@ class EntryPage extends Component {
     this.state = {
       currentView: "signUp"
     }
+    fetch(backend)
+        .then(response => response)
+        .then(data => {
+        });
   }
 
   changeView = (view) => {
@@ -19,11 +25,48 @@ class EntryPage extends Component {
     })
   }
 
-  registerEvent = (event) => {
-    console.log(document.getElementById("username").value);
-    fetch('http://localhost:8080/test')
+
+  loginEvent = (event) => {
+    event.preventDefault();
+    var user = document.getElementById("username").value;
+    var passwd = document.getElementById("password").value;
+    if (user !== "" && passwd !== ""){
+      fetch(backend + '/user', {
+        method: 'POST',
+        headers: {'Accept': 'application/json', 'Content-Type':'application/json'},
+        body: JSON.stringify({ user: user, password: passwd, type: "login" })
+       })
         .then(response => response.json())
-        .then(data => this.setState({ postId: data.id }));
+        .then(data => {
+          if(data.result.valueType === "TRUE"){
+            root.render(<Home userId={data.id.chars}/>);
+          } else {
+            alert("Błędny login lub hasło!");
+          }
+        });
+    }
+  }
+
+  registerEvent = (event) => {
+    event.preventDefault();
+    var user = document.getElementById("username").value;
+    var passwd = document.getElementById("password").value;
+    var email = document.getElementById("email").value;
+    if (user !== "" && passwd !== "" && email !== ""){
+      fetch(backend + '/user', {
+        method: 'POST',
+        headers: {'Accept': 'application/json', 'Content-Type':'application/json'},
+        body: JSON.stringify({ user: user, password: passwd, email: email, type: "register" })
+       })
+        .then(response => response.json())
+        .then(data => {
+          if(data.result.valueType === "TRUE"){
+            root.render(<Home userId={data.id.chars}/>);
+          } else {
+            alert("Użytkownik o zadanym loginie już istnieje!");
+          }
+        });
+    }
   }
 
   currentView = () => {
@@ -71,7 +114,7 @@ class EntryPage extends Component {
                 </li>
               </ul>
             </fieldset>
-            <button>Zaloguj się</button>
+            <button onClick={this.loginEvent}>Zaloguj się</button>
             <button type="button" onClick={ () => this.changeView("signUp")}>Utwórz nowe konto</button>
           </form>
         )
@@ -92,4 +135,3 @@ class EntryPage extends Component {
 }
 
 export default EntryPage;
-// ReactDOM.render(<EntryPage/>, document.getElementById("app"))
